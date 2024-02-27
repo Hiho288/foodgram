@@ -20,13 +20,8 @@ class Tag(models.Model):
 
 '''Модель ингредиента'''
 class Ingredient(models.Model):
-    class Unit(models.TextChoices):
-        GRAMM = "г"
-        PIECE = "шт"
-        # , choices=Unit.choices) #default=Unit.USER
-    name = models.CharField(max_length=16)
-    amount = models.IntegerField()
-    unit = models.CharField(max_length=16)
+    name = models.TextField(max_length=64)
+    measurement_unit = models.CharField(max_length=16)
 
     def __str__(self):
         return self.name
@@ -76,8 +71,14 @@ class Recipe(models.Model):
 
 '''Many to Many Рецепт-Ингридиенты'''
 class RecipeIngredient(models.Model):
+    class Unit(models.TextChoices):
+        GRAMM = "г"
+        PIECE = "шт"
+        # , choices=Unit.choices) #default=Unit.USER
+
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    amount = models.IntegerField()
 
     def __str__(self):
         return f'{self.recipe} {self.ingredient}'

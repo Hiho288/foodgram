@@ -59,7 +59,7 @@ class FollowSerializer(serializers.ModelSerializer):
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = '__all__'
+        fields = ['id', 'name', 'measurement_unit']
 
 
 class BuyListSerializer(serializers.ModelSerializer):
