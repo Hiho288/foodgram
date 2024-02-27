@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from django.contrib.auth import get_user_model
 
-from .models import Tag, Recipe, Follow, Ingredient, BuyList
+from all_models import Tag, Recipe, Follow, Ingredient, BuyList
 
 User = get_user_model()
 

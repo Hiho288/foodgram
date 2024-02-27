@@ -1,10 +1,10 @@
 from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet, ViewSet
-from .models import Tag, User, Ingredient, Recipe, RecipeTag, Favorites, Follow, BuyList
+from .all_models import Tag, User, Ingredient, Recipe, RecipeTag, Favorites, Follow, BuyList
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from django.contrib.auth.hashers import check_password
 from rest_framework.decorators import action
-from .serializers import TagSerializer, UserSerializer, FavoriteSerializer, FollowSerializer, IngredientSerializer, BuyListSerializer, RecipeSerializer
+from .all_serializers import TagSerializer, UserSerializer, FavoriteSerializer, FollowSerializer, IngredientSerializer, BuyListSerializer, RecipeSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from collections import defaultdict
