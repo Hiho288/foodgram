@@ -1,6 +1,4 @@
-from django.contrib.auth.models import AbstractUser
 from django.contrib.auth import get_user_model
-from django.core.validators import RegexValidator
 
 from django.db import models
 
@@ -17,15 +15,25 @@ class Tag(models.Model):
     color = models.CharField(max_length=16)
     slug = models.SlugField(max_length=16)
 
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+
+    def __str__(self):
+        return self.name
+
 
 '''Модель ингредиента'''
 class Ingredient(models.Model):
     name = models.TextField(max_length=64)
     measurement_unit = models.CharField(max_length=16)
 
+    class Meta:
+        verbose_name = 'Ингридиент'
+        verbose_name_plural = 'Ингридиенты'
+
     def __str__(self):
         return self.name
-
 
 
 
@@ -40,33 +48,12 @@ class Recipe(models.Model):
     cooking_time = models.IntegerField()
     created = models.DateField(auto_now_add=True, verbose_name='Дата и время публикации рецепта')
 
+    class Meta:
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
 
-
-
-#???????????????????
-# '''Модель пользователя - Надо ли?'''
-# class CustomUser(AbstractUser):
-#     class Role(models.TextChoices):
-#         USER = "user"
-#         ADMIN = "admin"
-
-#     username = models.CharField(
-#         max_length=150,
-#         unique=True,
-#         validators=([RegexValidator(regex=r'^[\w.@+-]+\Z')])
-#     )
-#     role = models.CharField(
-#         max_length=16,
-#         choices=Role.choices,
-#         default=Role.USER
-#     )
-
-#     @property
-#     def is_admin(self):
-#         return self.role == self.Role.ADMIN
-
-
-
+    def __str__(self):
+        return self.name
 
 
 '''Many to Many Рецепт-Ингридиенты'''
@@ -90,13 +77,17 @@ class RecipeTag(models.Model):
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'{self.recipe} {self.ingredient}'
+        return self.tag.name
 
 
 '''Many to Many Рецепт-Юзер'''
 class Favorites(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранные'
 
 
 '''Many to Many Подписки'''

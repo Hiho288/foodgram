@@ -4,11 +4,14 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from django.contrib.auth.hashers import check_password
 from rest_framework.decorators import action
-from .serializers import TagSerializer, UserSerializer, FavoriteSerializer, FollowSerializer, IngredientSerializer, BuyListSerializer, RecipeSerializer
+from .serializers import TagSerializer, UserSerializer, FavoriteSerializer, FollowSerializer, IngredientSerializer, BuyListSerializer, RecipeSerializer, UserRegistrationSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from collections import defaultdict
 from django.http import HttpResponse
+from djoser.views import TokenCreateView
+from rest_framework.response import Response
+
 
 
 class TagViewSet(ReadOnlyModelViewSet):
@@ -21,6 +24,37 @@ class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+    def create(self, request, *args, **kwargs):
+        required_fields = ['username', 'email', 'password', 'first_name', 'last_name']
+        data = request.data
+        if not all(field in data for field in required_fields):
+            return Response({"error": "Все поля обязательны к заполнению"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response({
+                "email": user.email,
+                "id": user.id,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name
+            }, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get'],) #permission_classes=[IsAuthenticated]
+    def me(self, request):
+        user = request.user
+        return Response({
+            "email": user.email,
+            "id": user.id,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "is_subscribed": False
+        })
+    
     @action(detail=False, methods=['post'])
     def set_password(self, request):
         user = request.user
@@ -35,6 +69,7 @@ class UserViewSet(ModelViewSet):
         user.set_password(new_password)
         user.save()
         return Response("Пароль успешно изменен", status=status.HTTP_200_OK)
+    
     
 
 class FavoriteRecipeAPIView(APIView):
