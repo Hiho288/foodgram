@@ -10,7 +10,7 @@ transformed_data = []
 # Преобразование данных
 for index, item in enumerate(data, start=1):
     transformed_item = {
-        "model": "api.Ingredient",
+        "model": "v1.Ingredient",
         "pk": index,
         "fields": {
             "name": item["name"],
