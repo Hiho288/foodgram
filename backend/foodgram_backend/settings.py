@@ -16,7 +16,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-
     'rest_framework',
     'rest_framework.authtoken',
     'djoser',
@@ -24,7 +23,6 @@ INSTALLED_APPS = [
     'corsheaders',
 
     'api.v1',
-    # 'users',
 ]
 
 MIDDLEWARE = [
@@ -95,8 +93,6 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# AUTH_USER_MODEL = 'users.User'
-
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated', 
@@ -108,53 +104,12 @@ REST_FRAMEWORK = {
 
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
-
 }
-
-
 
 
 DJOSER = {
     'LOGIN_FIELD': 'email',
-    # 'AUTH_HEADER_TYPES': ('Bearer',),
-
-#     'USER_CREATE_PASSWORD_RETYPE': True,
-#     'SERIALIZERS': {
-#         'user_create': 'users.serializers.UserCreateSerializer',
-#         'user': 'users.serializers.UserSerializer',
-#         'current_user': 'users.serializers.UserSerializer',
-#         'token_create': 'djoser.serializers.TokenCreateSerializer',
-#     },
-#     'PERMISSIONS': {
-#         'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
-#         'user_list': ['rest_framework.permissions.IsAuthenticated'],
-#     },
 }
-
-
-
-# DJOSER = {
-#     'SERIALIZERS': {
-#         'user_create': 'users.serializers.CustomUserCreateSerializer',
-#         'user': 'users.serializers.CustomUserSerializer',
-#         'current_user': 'users.serializers.CustomUserSerializer',
-#     },
-
-#     'PERMISSIONS': {
-#         'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
-#         'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
-#     },
-#     'HIDE_USERS': False,
-# }
-
-
-# AUTHENTICATION_BACKENDS = [
-#     'django.contrib.auth.backends.ModelBackend',
-# ]
-
-
-
-
 
 # СВЯЗЬ С ФРОНТОМ
 CORS_ALLOW_ALL_ORIGINS = True

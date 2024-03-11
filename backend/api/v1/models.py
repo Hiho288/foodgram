@@ -8,7 +8,6 @@ from django.db import models
 User = get_user_model()
 
 
-
 '''Модель тега'''
 class Tag(models.Model):
     name = models.CharField(max_length=16)
@@ -21,8 +20,6 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.name
-
-
 '''Модель ингредиента'''
 class Ingredient(models.Model):
     name = models.TextField(max_length=64)
@@ -34,17 +31,14 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return self.name
-
-
-
 '''Модель рецепта'''
 class Recipe(models.Model):
     author = models.ForeignKey(User, related_name='HHH', on_delete=models.CASCADE)
-    name = models.CharField(max_length=16)
+    name = models.CharField(max_length=64)
     image = models.ImageField(upload_to='cats/images/', null=True, default=None) #HHH
     text = models.TextField()
     ingredients = models.ManyToManyField(Ingredient, through='RecipeIngredient')
-    tag = models.ManyToManyField(Tag, through='RecipeTag')
+    tags = models.ManyToManyField(Tag, through='RecipeTag', related_name='recipes')
     cooking_time = models.IntegerField()
     created = models.DateField(auto_now_add=True, verbose_name='Дата и время публикации рецепта')
 
@@ -54,21 +48,11 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
-
-
-'''Many to Many Рецепт-Ингридиенты'''
 class RecipeIngredient(models.Model):
-    class Unit(models.TextChoices):
-        GRAMM = "г"
-        PIECE = "шт"
-        # , choices=Unit.choices) #default=Unit.USER
-
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, related_name='recipeingredient_set', on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.IntegerField()
 
-    def __str__(self):
-        return f'{self.recipe} {self.ingredient}'
 
 
 '''Many to Many Рецепт-Тэг'''

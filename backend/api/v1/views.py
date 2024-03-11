@@ -3,7 +3,7 @@ from .models import Tag, User, Ingredient, Recipe, RecipeTag, Favorites, Follow,
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from django.contrib.auth.hashers import check_password
-from rest_framework.decorators import action
+from rest_framework.decorators import action, permission_classes
 from .serializers import TagSerializer, UserSerializer, FavoriteSerializer, FollowSerializer, IngredientSerializer, BuyListSerializer, RecipeSerializer, UserRegistrationSerializer
 from rest_framework.response import Response
 from rest_framework import status
@@ -11,22 +11,26 @@ from collections import defaultdict
 from django.http import HttpResponse
 from djoser.views import TokenCreateView
 from rest_framework.response import Response
-
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 
 
 class TagViewSet(ReadOnlyModelViewSet):
+    permission_classes = [AllowAny]
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
-
-
 class UserViewSet(ModelViewSet):
+    permission_classes = [AllowAny]
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    pagination_class = LimitOffsetPagination
 
     def create(self, request, *args, **kwargs):
         required_fields = ['username', 'email', 'password', 'first_name', 'last_name']
         data = request.data
+
+        # user = User.objects.get(username=request.data.username)
         if not all(field in data for field in required_fields):
             return Response({"error": "Все поля обязательны к заполнению"}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -43,7 +47,7 @@ class UserViewSet(ModelViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    @action(detail=False, methods=['get'],) #permission_classes=[IsAuthenticated]
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def me(self, request):
         user = request.user
         return Response({
@@ -55,7 +59,7 @@ class UserViewSet(ModelViewSet):
             "is_subscribed": False
         })
     
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def set_password(self, request):
         user = request.user
         data = request.data
@@ -68,9 +72,7 @@ class UserViewSet(ModelViewSet):
 
         user.set_password(new_password)
         user.save()
-        return Response("Пароль успешно изменен", status=status.HTTP_200_OK)
-    
-    
+        return Response("Пароль успешно изменен", status=status.HTTP_204_NO_CONTENT)
 
 class FavoriteRecipeAPIView(APIView):
 
@@ -131,10 +133,11 @@ class SubscribeAPIView(APIView):
                 return Response({'error': 'Подписка не найдена.'}, status=status.HTTP_404_NOT_FOUND)
         except User.DoesNotExist:
             return Response({'error': 'Пользователь не найден.'}, status=status.HTTP_404_NOT_FOUND)
-        
 
 '''СПИСОК ИЛИ КОНКРЕТНЫЙ ИНГРИДИЕНТ'''
 class IngredientAPIView(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request, id=None):
         if id:
             # Получение деталей ингредиента по ID
@@ -145,7 +148,6 @@ class IngredientAPIView(APIView):
             ingredients = Ingredient.objects.all()
             serializer = IngredientSerializer(ingredients, many=True)
         return Response(serializer.data)
-    
 
 '''СПИСОК ПОКУПОК'''
 class BuyListAPIView(APIView):
@@ -170,7 +172,6 @@ class BuyListAPIView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response({'errors': 'Рецепт не найден в списке покупок'}, status=status.HTTP_404_NOT_FOUND)
-        
 
 '''ЛИСТ ПОКУПОК'''
 class DownloadShoppingCartAPIView(APIView):
@@ -193,21 +194,22 @@ class DownloadShoppingCartAPIView(APIView):
         
         return response
 
-
 class RecipeViewSet(ViewSet):
-    
+    pagination_class = PageNumberPagination
+    permission_classes = [AllowAny]
+
     def list(self, request):
         queryset = Recipe.objects.all()
         serializer = RecipeSerializer(queryset, many=True)
         return Response(serializer.data)
     
     def create(self, request):
-        serializer = RecipeSerializer(data=request.data)
+        serializer = RecipeSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(author=request.user)
-            return Response(serializer.data, status=201)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=400)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def retrieve(self, request, pk=None):
         queryset = Recipe.objects.all()
@@ -221,9 +223,9 @@ class RecipeViewSet(ViewSet):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-        return Response(serializer.errors, status=400)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def destroy(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
         recipe.delete()
-        return Response(status=204)
+        return Response(status=status.HTTP_204_NO_CONTENT)
