@@ -48,12 +48,11 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
 class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, related_name='recipeingredient_set', on_delete=models.CASCADE)
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.IntegerField()
-
-
 
 '''Many to Many Рецепт-Тэг'''
 class RecipeTag(models.Model):
@@ -63,7 +62,6 @@ class RecipeTag(models.Model):
     def __str__(self):
         return self.tag.name
 
-
 '''Many to Many Рецепт-Юзер'''
 class Favorites(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
@@ -72,7 +70,6 @@ class Favorites(models.Model):
     class Meta:
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные'
-
 
 '''Many to Many Подписки'''
 class Follow(models.Model):
@@ -101,7 +98,6 @@ class Follow(models.Model):
 
     def __str__(self):
         return f'{self.user.username} follows {self.following.username}'
-
 
 '''Many to Many Рецепт-Юзер'''
 class BuyList(models.Model):

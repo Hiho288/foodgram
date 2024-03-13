@@ -3,7 +3,7 @@ from .models import Tag, User, Ingredient, Recipe, RecipeTag, Favorites, Follow,
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from django.contrib.auth.hashers import check_password
-from rest_framework.decorators import action, permission_classes
+from rest_framework.decorators import action, permission_classes, api_view
 from .serializers import TagSerializer, UserSerializer, FavoriteSerializer, FollowSerializer, IngredientSerializer, BuyListSerializer, RecipeSerializer, UserRegistrationSerializer
 from rest_framework.response import Response
 from rest_framework import status
@@ -11,14 +11,26 @@ from collections import defaultdict
 from django.http import HttpResponse
 from djoser.views import TokenCreateView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
-
+from django.core.exceptions import PermissionDenied
 
 class TagViewSet(ReadOnlyModelViewSet):
     permission_classes = [AllowAny]
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    pagination_class = None
+
+    # def get(self, request, id=None):
+    #     if id:
+    #         # Получение деталей ингредиента по ID
+    #         ingredient = get_object_or_404(Tag, pk=id)
+    #         serializer = TagSerializer(ingredient)
+    #     else:
+    #         # Получение списка всех ингредиентов
+    #         ingredients = Tag.objects.all()
+    #         serializer = TagSerializer(ingredients, many=True)
+    #     return Response(serializer.data)
 
 class UserViewSet(ModelViewSet):
     permission_classes = [AllowAny]
@@ -144,8 +156,11 @@ class IngredientAPIView(APIView):
             ingredient = get_object_or_404(Ingredient, pk=id)
             serializer = IngredientSerializer(ingredient)
         else:
-            # Получение списка всех ингредиентов
+            # Получение списка всех ингредиентов с возможной фильтрацией по первой букве имени
+            name_start = request.query_params.get('name', None)
             ingredients = Ingredient.objects.all()
+            if name_start is not None:
+                ingredients = ingredients.filter(name__startswith=name_start)
             serializer = IngredientSerializer(ingredients, many=True)
         return Response(serializer.data)
 
@@ -196,12 +211,41 @@ class DownloadShoppingCartAPIView(APIView):
 
 class RecipeViewSet(ViewSet):
     pagination_class = PageNumberPagination
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def list(self, request):
         queryset = Recipe.objects.all()
-        serializer = RecipeSerializer(queryset, many=True)
-        return Response(serializer.data)
+        page_size = 6  # 6 рецептов на странице
+
+        # kword limit
+        limit = request.query_params.get('limit')
+        if limit:
+            try:
+                page_size = int(limit)
+            except ValueError:
+                return Response({"error": "Invalid limit value. Limit must be an integer."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # kword author
+        author = request.query_params.get('author')
+        if author:
+            queryset = queryset.filter(author=author)
+
+        # kword author
+        tags = request.query_params.getlist('tags')
+        if tags:
+            queryset = queryset.filter(tags__name__in=tags)
+        
+        paginator = self.pagination_class()
+        paginator.page_size = page_size 
+        page = paginator.paginate_queryset(queryset, request)
+        serializer = RecipeSerializer(page, many=True, context={'request': request})
+        paginated_response = paginator.get_paginated_response(serializer.data)
+        return Response({
+            'count': paginator.page.paginator.count,
+            'next': paginated_response.data.get('next'),
+            'previous': paginated_response.data.get('previous'),
+            'results': paginated_response.data.get('results')
+        })
     
     def create(self, request):
         serializer = RecipeSerializer(data=request.data, context={'request': request})
@@ -210,16 +254,76 @@ class RecipeViewSet(ViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # def create(self, request):
+        # if 'ingredients' not in request.data or not request.data['ingredients']:
+        #     return Response({"detail": "В рецепте должен быть хотя-бы 1 ингредиент"}, status=status.HTTP_400_BAD_REQUEST)
+        # serializer = RecipeSerializer(data=request.data, context={'request': request})
+
+        # ingredient_ids = [ingredient['id'] for ingredient in request.data['ingredients']]
+        # if not Ingredient.objects.filter(pk__in=ingredient_ids).exists():
+        #     return Response({"error": "One or more ingredients do not exist."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # for ingredient in request.data['ingredients']:
+        #     if ingredient.get('amount', 0) < 1:
+        #         return Response({"error": "Amount of each ingredient must be at least 1."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # ingredient_ids = [ingredient['id'] for ingredient in request.data['ingredients']]
+        # if len(ingredient_ids) != len(set(ingredient_ids)):
+        #     return Response({"error": "Duplicate ingredients are not allowed."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # if 'tags' not in request.data:
+        #     return Response({"error": "Field 'tags' is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # # Проверка на пустые теги
+        # if not request.data['tags']:
+        #     return Response({"error": "Field 'tags' cannot be empty."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # tags_ids = [tag for tag in request.data['tags']]
+        # if len(tags_ids) != len(set(tags_ids)):
+        #     return Response({"error": "Duplicate tags are not allowed."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # if 'image' not in request.data or not request.data['image']:
+        #     return Response({"detail": "Должно быть переданно изображение"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # serializer = RecipeSerializer(data=request.data, context={'request': request})
+        # if 'cooking_time' not in request.data:
+        #     return Response({"error": "Field 'cooking_time' is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # if request.data['cooking_time'] == "":
+        #     return Response({"error": "Время готовки должно быть указано"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # if request.data['cooking_time'] < 1:
+        #     return Response({"error": "Время готовки не может быть меньше 1 минуты"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        # if serializer.is_valid():
+        #     serializer.save()
+        #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # else:
+        #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def retrieve(self, request, pk=None):
         queryset = Recipe.objects.all()
         recipe = get_object_or_404(queryset, pk=pk)
-        serializer = RecipeSerializer(recipe)
+        serializer = RecipeSerializer(recipe, context={'request': request})
         return Response(serializer.data)
     
     def update(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
-        serializer = RecipeSerializer(recipe, data=request.data, partial=True)
+
+        print(recipe.author == request.user)
+        if recipe.author != request.user:
+            raise PermissionDenied("You do not have permission to update this recipe.")
+        
+        serializer = RecipeSerializer(recipe, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def partial_update(self, request, pk=None):
+        recipe = get_object_or_404(Recipe, pk=pk)
+        serializer = RecipeSerializer(recipe, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
