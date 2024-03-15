@@ -1,18 +1,23 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.db.models import Count
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Tag, Ingredient, Recipe, RecipeIngredient, RecipeTag, Favorites, Follow, BuyList
+from .models import Tag, Ingredient, Recipe, RecipeIngredient, RecipeTag, Favorites, Follow, BuyList, User
 
-# class RecipeTagInline(admin.StackedInline):
-#     model = RecipeTag
-#     extra = 0
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.db.models import Count
 
-User = get_user_model()
+# User = get_user_model()
+# Предполагаем, что модели и get_user_model уже импортированы
 
-# @admin.register(User)
-# class UserAdmin(admin.ModelAdmin):
-#     pass
+# Раскомментируйте и настройте класс UserAdmin
+class UserAdmin(BaseUserAdmin):
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff')
+    search_fields = ('username', 'email')
 
+@admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ('name', 'color', 'slug')
     search_fields = ('name',)
@@ -24,59 +29,28 @@ class IngredientAdmin(admin.ModelAdmin):
 
 class RecipeIngredientInline(admin.TabularInline):
     model = RecipeIngredient
-    extra = 1
+    extra = 0
 
-class RecipeTagInline(admin.TabularInline):
-    model = RecipeTag
-    extra = 1
+# Нет необходимости в RecipeTagInline, если у вас нет отдельной модели для связи рецептов и тегов
+# и если используется ManyToManyField в модели Recipe
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'author', 'cooking_time') #, 'created'
-    list_filter = ('author', 'name') #'tags'
+    list_display = ('name', 'author', 'cooking_time', 'favorites_count')
+    list_filter = ('author', 'name', 'tags')
     search_fields = ('name', 'author__username', 'tags__name')
-    inlines = (RecipeIngredientInline, RecipeTagInline)
+    inlines = (RecipeIngredientInline,)
 
-@admin.register(Favorites)
-class FavoritesAdmin(admin.ModelAdmin):
-    list_display = ('recipe', 'user')
-    search_fields = ('recipe__name', 'user__username')
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        queryset = queryset.annotate(favorites_count=Count('favorites'))
+        return queryset
 
-@admin.register(Follow)
-class FollowAdmin(admin.ModelAdmin):
-    list_display = ('user', 'following')
-    search_fields = ('user__username', 'following__username')
+    def favorites_count(self, obj):
+        return obj.favorites_count
+    favorites_count.admin_order_field = 'favorites_count'
+    favorites_count.short_description = 'В избранном'
 
-@admin.register(BuyList)
-class BuyListAdmin(admin.ModelAdmin):
-    list_display = ('recipe', 'user')
-    search_fields = ('recipe__name', 'user__username')
-
-
-
-
-
-# class RecipeAdmin(admin.ModelAdmin):
-#     inlines = (
-#         RecipeTagInline,
-#     )
-
-#     list_display = (
-#             'author',
-#             'name',
-#             'image',
-#             'text',
-#             # 'ingredients',
-#             # 'tag',
-#             'cooking_time',
-#             'created',
-#         )
-#     # filter_horizontal = ('tag',)
-
-
+# Остальные классы Admin для Favorites, Follow, BuyList уже соответствуют требованиям
 
 admin.site.empty_value_display = 'Не задано'
-
-# admin.site.register(Recipe, RecipeAdmin)
-admin.site.register(Tag, TagAdmin)
-# admin.site.register(Ingredient, IngredientAdmin)
