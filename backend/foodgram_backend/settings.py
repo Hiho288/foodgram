@@ -1,12 +1,18 @@
 from pathlib import Path
+import os
 
+# from decouple import config
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-u=lk2buedbl7lm&f=uiy5puwle88tlx=3ec%v)15&=hm+9=@82'
+SECRET_KEY = os.getenv('SETTINGS_SECRET_KEY', default='django-insecure-cg6*%6d51ef8f#4!r3*$vmxm4)abgjw8mo!4y-q*uq1!4$-89$')
 
 DEBUG = True
+# DEBUG = config('DEBUG', default=False, cast=bool)
+# TEMPLATE_DEBUG = DEBUG
 
-ALLOWED_HOSTS = ['*',]
+# ALLOWED_HOSTS = os.getenv('SETTINGS_ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '51.250.107.180', 'sprint15bnikolaev.ddns.net', '0.0.0.0'])
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '51.250.107.180', 'sprint15bnikolaev.ddns.net', '0.0.0.0']
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -27,7 +33,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
-
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -59,8 +64,12 @@ WSGI_APPLICATION = 'foodgram_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', 'django'),
+        'USER': os.getenv('POSTGRES_USER', 'django'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', 5432)
     }
 }
 
@@ -90,6 +99,10 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'collected_static'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

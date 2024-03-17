@@ -282,7 +282,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"error": "One or more ingredients do not exist."})
 
         for ingredient in self.initial_data['ingredients']:
-            if ingredient.get('amount', 0) < 1:
+            if int(ingredient.get('amount', 0)) < 1:
                 raise serializers.ValidationError({"error": "Amount of each ingredient must be at least 1."})
 
         if len(ingredient_ids) != len(set(ingredient_ids)):

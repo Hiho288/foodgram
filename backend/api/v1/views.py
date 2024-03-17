@@ -311,7 +311,7 @@ class RecipeViewSet(ViewSet):
     def update(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
 
-        print(recipe.author == request.user)
+        # print(recipe.author == request.user)
         if recipe.author != request.user:
             raise PermissionDenied("You do not have permission to update this recipe.")
         
