@@ -10,8 +10,8 @@ DEBUG = True
 # DEBUG = config('DEBUG', default=False, cast=bool)
 # TEMPLATE_DEBUG = DEBUG
 
-# ALLOWED_HOSTS = os.getenv('SETTINGS_ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '51.250.107.180', 'sprint15bnikolaev.ddns.net', '0.0.0.0'])
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '51.250.107.180', 'sprint15bnikolaev.ddns.net', '0.0.0.0']
+# ALLOWED_HOSTS = os.getenv('SETTINGS_ALLOWED_HOSTS') #, default=['localhost', '127.0.0.1', '51.250.107.180', 'sprint15bnikolaev.ddns.net', '0.0.0.0']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '51.250.107.180', 'sprint15bnikolaev.ddns.net', '0.0.0.0', '127.0.0.1:9000'] #, '0.0.0.0:9000', '0.0.0.0'
 
 
 INSTALLED_APPS = [
@@ -119,17 +119,16 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
 }
 
-
 DJOSER = {
     'LOGIN_FIELD': 'email',
 }
 
 # СВЯЗЬ С ФРОНТОМ
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_ALL_ORIGINS = True
 
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_URLS_REGEX = r'^/api/.*$' 
+# CORS_ORIGIN_ALLOW_ALL = True
+# CORS_URLS_REGEX = r'^/api/.*$' 
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-]
+# CORS_ALLOWED_ORIGINS = [
+#     'http://localhost:3000',
+# ]

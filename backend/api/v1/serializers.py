@@ -27,16 +27,26 @@ class Hex2NameColor(serializers.Field):
             raise serializers.ValidationError('Для этого цвета нет имени')
         return data
 
+# class Base64ImageField(serializers.ImageField):
+#     def to_internal_value(self, data):
+#         if isinstance(data, str) and data.startswith('data:image'):
+#             # Find the start of the base64 string
+#             header, base64_data = data.split(';base64,')
+#             # Decode the base64 string
+#             decoded_file = base64.b64decode(base64_data)
+#             # Create a Django ContentFile
+#             file_name = 'uploaded_image.jpg'  # You might want to generate a unique name for each file
+#             data = ContentFile(decoded_file, name=file_name)
+#         return super().to_internal_value(data)
+
 class Base64ImageField(serializers.ImageField):
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
-            # Find the start of the base64 string
-            header, base64_data = data.split(';base64,')
-            # Decode the base64 string
-            decoded_file = base64.b64decode(base64_data)
-            # Create a Django ContentFile
-            file_name = 'uploaded_image.jpg'  # You might want to generate a unique name for each file
-            data = ContentFile(decoded_file, name=file_name)
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
+
+            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+
         return super().to_internal_value(data)
 
 class UserSerializer(serializers.ModelSerializer):
@@ -178,20 +188,26 @@ class RecipeTagSerializer(serializers.ModelSerializer):
         fields = ('id', )
 
 class RecipeSerializer(serializers.ModelSerializer):
-    # ingredients = IngredientInputSerializer(many=True)
     ingredients = IngredientDetailSerializer(source='recipeingredient_set', many=True, required=False)
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
     image = Base64ImageField(max_length=None, use_url=True, required=False, allow_null=True)
-    # author = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
-
+    # image_url = serializers.SerializerMethodField(
+    #     'get_image_url',
+    #     read_only=True,
+    # )
     author = AuthorSerializer(read_only=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
-        fields = ['id', 'name', 'image', 'tags', 'ingredients', 'author', 'text', 'cooking_time', 'is_favorited', 'is_in_shopping_cart'] # 'created', 
+        fields = ['id', 'name', 'image', 'tags', 'ingredients', 'author', 'text', 'cooking_time', 'is_favorited', 'is_in_shopping_cart'] # 'created', 'image_url'
 
+    # def get_image_url(self, obj):
+    #     if obj.image:
+    #         return obj.image.url
+    #     return None
+    
     def get_is_favorited(self, obj):
         # Проверяем, есть ли рецепт в избранных у текущего пользователя
         user = self.context['request'].user
@@ -287,8 +303,6 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         if len(ingredient_ids) != len(set(ingredient_ids)):
             raise serializers.ValidationError({"error": "Duplicate ingredients are not allowed."})
-
-
 
         # Проверка наличия поля 'tags'
         if 'tags' not in attrs:

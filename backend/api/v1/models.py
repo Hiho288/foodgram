@@ -35,7 +35,7 @@ class Ingredient(models.Model):
 class Recipe(models.Model):
     author = models.ForeignKey(User, related_name='HHH', on_delete=models.CASCADE)
     name = models.CharField(max_length=64)
-    image = models.ImageField(upload_to='cats/images/', null=True, default=None) #HHH
+    image = models.ImageField(upload_to='recipes/images/', null=True, default=None)
     text = models.TextField()
     ingredients = models.ManyToManyField(Ingredient, through='RecipeIngredient')
     tags = models.ManyToManyField(Tag, through='RecipeTag', related_name='recipes')

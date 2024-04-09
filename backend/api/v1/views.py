@@ -230,7 +230,7 @@ class RecipeViewSet(ViewSet):
         if author:
             queryset = queryset.filter(author=author)
 
-        # kword author
+        # kword tags
         tags = request.query_params.getlist('tags')
         if tags:
             queryset = queryset.filter(tags__name__in=tags)
