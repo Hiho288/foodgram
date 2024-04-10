@@ -1,18 +1,15 @@
-from rest_framework import serializers
-
 import base64
+
 import webcolors
-
 from django.contrib.auth import get_user_model
-
-from .models import Tag, Recipe, Follow, Ingredient, BuyList, RecipeIngredient, RecipeTag, Favorites
 from django.contrib.auth.password_validation import validate_password
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
-
+from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
 
-
+from .models import (BuyList, Favorites, Follow, Ingredient, Recipe,
+                     RecipeIngredient, RecipeTag, Tag)
 
 User = get_user_model()
 

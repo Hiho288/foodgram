@@ -1,9 +1,7 @@
-from django.contrib import admin
-from django.urls import path, include
-from djoser.views import TokenCreateView, TokenDestroyView
 from django.conf import settings
 from django.conf.urls.static import static
-# from api.v1.views import CustomTokenCreateView
+from django.contrib import admin
+from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),

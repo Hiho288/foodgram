@@ -69,7 +69,7 @@
         with:
           context: ./backend/
           push: true
-          tags: hiho288/kittygram_backend:latest
+          tags: hiho288/foodgram_backend:latest
     # ФРОНТЕНД ТЕСТЫ
   frontend_tests:
     runs-on: ubuntu-latest
@@ -107,7 +107,7 @@
         with:
           context: ./frontend/
           push: true
-          tags: hiho288/kittygram_frontend:latest
+          tags: hiho288/foodgram_frontend:latest
     # NGINX
   build_gateway_and_push_to_docker_hub:
     name: Push gateway Docker image to DockerHub
@@ -127,7 +127,7 @@
         with:
           context: ./nginx/
           push: true
-          tags: hiho288/kittygram_gateway:latest
+          tags: hiho288/foodgram_gateway:latest
   # САМ ДЕПЛОЙ
   deploy:
     runs-on: ubuntu-latest
@@ -146,7 +146,7 @@
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         source: "docker-compose.production.yml"
-        target: "kittygram"
+        target: "foodgram"
     - name: Executing remote ssh commands to deploy
       uses: appleboy/ssh-action@master
       with:
@@ -155,7 +155,7 @@
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         script: |
-          cd kittygram
+          cd foodgram
           # Выполняет pull образов с Docker Hub
           sudo docker compose -f docker-compose.production.yml pull
           # Перезапускает все контейнеры в Docker Compose

@@ -1,19 +1,27 @@
-from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet, ViewSet
-from .models import Tag, User, Ingredient, Recipe, RecipeTag, Favorites, Follow, BuyList
-from django.shortcuts import get_object_or_404
-from rest_framework.views import APIView
-from django.contrib.auth.hashers import check_password
-from rest_framework.decorators import action, permission_classes, api_view
-from .serializers import TagSerializer, UserSerializer, FavoriteSerializer, FollowSerializer, IngredientSerializer, BuyListSerializer, RecipeSerializer, UserRegistrationSerializer
-from rest_framework.response import Response
-from rest_framework import status
 from collections import defaultdict
-from django.http import HttpResponse
-from djoser.views import TokenCreateView
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
+
+from django.contrib.auth.hashers import check_password
 from django.core.exceptions import PermissionDenied
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from djoser.views import TokenCreateView
+from rest_framework import status
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.pagination import (LimitOffsetPagination,
+                                       PageNumberPagination)
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
+
+from .models import (BuyList, Favorites, Follow, Ingredient, Recipe, RecipeTag,
+                     Tag, User)
+from .serializers import (BuyListSerializer, FavoriteSerializer,
+                          FollowSerializer, IngredientSerializer,
+                          RecipeSerializer, TagSerializer,
+                          UserRegistrationSerializer, UserSerializer)
+
 
 class TagViewSet(ReadOnlyModelViewSet):
     permission_classes = [AllowAny]

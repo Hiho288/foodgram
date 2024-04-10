@@ -1,13 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from django.db.models import Count
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-
-from .models import Tag, Ingredient, Recipe, RecipeIngredient, RecipeTag, Favorites, Follow, BuyList, User
-
-from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.db.models import Count
+
+from .models import (BuyList, Favorites, Follow, Ingredient, Recipe,
+                     RecipeIngredient, RecipeTag, Tag, User)
 
 # User = get_user_model()
 # Предполагаем, что модели и get_user_model уже импортированы
