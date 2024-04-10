@@ -1,5 +1,5 @@
  # workflow 
- name: Main Kittygram Workflow
+ name: Main Foodgram Workflow
  on:
    push:
      branches:
