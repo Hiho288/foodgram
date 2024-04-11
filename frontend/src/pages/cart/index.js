@@ -1,8 +1,8 @@
-import { PurchaseList, Title, Container, Main, Button } from '../../components'
+import { PurchaseList, Title, Container, Main, Button } from '../../components/index.js'
 import styles from './styles.module.css'
 import { useRecipes } from '../../utils/index.js'
 import { useEffect, useState } from 'react'
-import api from '../../api'
+import api from '../../api/index.js'
 import MetaTags from 'react-meta-tags'
 
 const Cart = ({ updateOrders, orders }) => {
