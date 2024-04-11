@@ -2,7 +2,7 @@ import cn from 'classnames'
 import styles from './styles.module.css'
 import { useContext } from 'react'
 import { Button, LinkComponent } from '../index.js'
-import { AuthContext } from '../../contexts/index.js'
+import { AuthContext } from '../../contexts'
 
 const AccountMenu = ({ onSignOut }) => {
   const authContext = useContext(AuthContext)

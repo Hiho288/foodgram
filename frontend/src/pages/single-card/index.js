@@ -1,15 +1,15 @@
-import { Container, Main, Button, TagsContainer, Icons, LinkComponent } from '../../components/index.js'
-import { UserContext, AuthContext } from '../../contexts/index.js'
+import { Container, Main, Button, TagsContainer, Icons, LinkComponent } from '../../components'
+import { UserContext, AuthContext } from '../../contexts'
 import { useContext, useState, useEffect } from 'react'
 import styles from './styles.module.css'
-import Ingredients from './ingredients/index.js'
-import Description from './description/index.js'
+import Ingredients from './ingredients'
+import Description from './description'
 import cn from 'classnames'
 import { useRouteMatch, useParams, useHistory } from 'react-router-dom'
 import MetaTags from 'react-meta-tags'
 
 import { useRecipe } from '../../utils/index.js'
-import api from '../../api/index.js'
+import api from '../../api'
 
 const SingleCard = ({ loadItem, updateOrders }) => {
   const [ loading, setLoading ] = useState(true)

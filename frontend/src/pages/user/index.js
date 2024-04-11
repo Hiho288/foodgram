@@ -7,14 +7,14 @@ import {
   CheckboxGroup,
   Container,
   Main 
-} from '../../components/index.js'
+} from '../../components'
 import cn from 'classnames'
 import styles from './styles.module.css'
 import { useRecipes } from '../../utils/index.js'
 import { useEffect, useState, useContext } from 'react'
-import api from '../../api/index.js'
+import api from '../../api'
 import { useParams, useHistory } from 'react-router-dom'
-import { UserContext } from '../../contexts/index.js'
+import { UserContext } from '../../contexts'
 import MetaTags from 'react-meta-tags'
 
 const UserPage = ({ updateOrders }) => {

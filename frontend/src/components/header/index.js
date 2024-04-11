@@ -1,6 +1,6 @@
 import styles from './style.module.css'
 import { Nav, AccountMenu } from '../index.js'
-import Container from '../container/index.js'
+import Container from '../container'
 
 const Header = ({ loggedIn, onSignOut, orders }) => {
   return <header
