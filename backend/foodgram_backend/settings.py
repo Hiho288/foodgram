@@ -11,7 +11,7 @@ DEBUG = True
 # TEMPLATE_DEBUG = DEBUG
 
 # ALLOWED_HOSTS = os.getenv('SETTINGS_ALLOWED_HOSTS') #, default=['localhost', '127.0.0.1', '51.250.107.180', 'sprint15bnikolaev.ddns.net', '0.0.0.0']
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '51.250.107.180', 'sprint15bnikolaev.ddns.net', '0.0.0.0', '127.0.0.1:9000'] #, '0.0.0.0:9000', '0.0.0.0'
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '51.250.107.180', 'sprint15bnikolaev.ddns.net', '0.0.0.0', '127.0.0.1:9000']  # , '0.0.0.0:9000', '0.0.0.0'
 
 
 INSTALLED_APPS = [
@@ -101,14 +101,14 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'collected_static'
 
-MEDIA_URL = '/media/'
+MEDIA_URL = 'http://sprint15bnikolaev.ddns.net/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated', 
+        'rest_framework.permissions.IsAuthenticated',
     ],
 
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -122,13 +122,3 @@ REST_FRAMEWORK = {
 DJOSER = {
     'LOGIN_FIELD': 'email',
 }
-
-# СВЯЗЬ С ФРОНТОМ
-# CORS_ALLOW_ALL_ORIGINS = True
-
-# CORS_ORIGIN_ALLOW_ALL = True
-# CORS_URLS_REGEX = r'^/api/.*$' 
-
-# CORS_ALLOWED_ORIGINS = [
-#     'http://localhost:3000',
-# ]
