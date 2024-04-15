@@ -14,8 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 
-from .models import (BuyList, Favorites, Follow, Ingredient, Recipe,
-                     Tag, User)
+from .models import BuyList, Favorites, Follow, Ingredient, Recipe, Tag, User
 from .serializers import (BuyListSerializer, FavoriteSerializer,
                           FollowSerializer, IngredientSerializer,
                           RecipeSerializer, TagSerializer,
@@ -27,6 +26,7 @@ class TagViewSet(ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     pagination_class = None
+
 
 class UserViewSet(ModelViewSet):
     permission_classes = [AllowAny]
@@ -48,7 +48,7 @@ class UserViewSet(ModelViewSet):
                 {"error": "Все поля обязательны к заполнению"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
@@ -64,11 +64,11 @@ class UserViewSet(ModelViewSet):
                 serializer.errors,
                 status=status.HTTP_400_BAD_REQUEST
             )
-    
+
     @action(
-            detail=False,
-            methods=['get'],
-            permission_classes=[IsAuthenticated]
+        detail=False,
+        methods=['get'],
+        permission_classes=[IsAuthenticated]
     )
     def me(self, request):
         user = request.user
@@ -80,11 +80,11 @@ class UserViewSet(ModelViewSet):
             "last_name": user.last_name,
             "is_subscribed": False
         })
-    
+
     @action(
-            detail=False,
-            methods=['post'],
-            permission_classes=[IsAuthenticated]
+        detail=False,
+        methods=['post'],
+        permission_classes=[IsAuthenticated]
     )
     def set_password(self, request):
         user = request.user
@@ -105,6 +105,7 @@ class UserViewSet(ModelViewSet):
             "Пароль успешно изменен",
             status=status.HTTP_204_NO_CONTENT
         )
+
 
 class FavoriteRecipeAPIView(APIView):
 
@@ -135,8 +136,9 @@ class FavoriteRecipeAPIView(APIView):
                 {'errors': 'Рецепт не найден в избранном'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
-'''ПОДПИСКИ'''
+
+
+# ПОДПИСКИ
 class SubscriptionsAPIView(APIView):
     def get(self, request):
         user = request.user
@@ -144,7 +146,9 @@ class SubscriptionsAPIView(APIView):
         serializer = FollowSerializer(subscriptions, many=True)
         return Response(serializer.data)
 
+
 class SubscribeAPIView(APIView):
+
     def post(self, request, id):
         user = request.user
         try:
@@ -197,7 +201,8 @@ class SubscribeAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-'''СПИСОК ИЛИ КОНКРЕТНЫЙ ИНГРИДИЕНТ'''
+
+# СПИСОК ИЛИ КОНКРЕТНЫЙ ИНГРИДИЕНТ
 class IngredientAPIView(APIView):
     permission_classes = [AllowAny]
 
@@ -215,8 +220,10 @@ class IngredientAPIView(APIView):
             serializer = IngredientSerializer(ingredients, many=True)
         return Response(serializer.data)
 
-'''СПИСОК ПОКУПОК'''
+
+# СПИСОК ПОКУПОК
 class BuyListAPIView(APIView):
+
     def post(self, request, id):
         user = request.user
         recipe = get_object_or_404(Recipe, pk=id)
@@ -246,7 +253,7 @@ class BuyListAPIView(APIView):
             )
 
 
-'''ЛИСТ ПОКУПОК'''
+# ЛИСТ ПОКУПОК
 class DownloadShoppingCartAPIView(APIView):
 
     def get(self, request):

@@ -5,8 +5,8 @@ from django.db import models
 User = get_user_model()
 
 
-'''Модель тега'''
 class Tag(models.Model):
+    '''Модель тега'''
     name = models.CharField(max_length=16)
     color = models.CharField(max_length=16)
     slug = models.SlugField(max_length=16)
@@ -17,8 +17,11 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.name
-'''Модель ингредиента'''
+
+
 class Ingredient(models.Model):
+    '''Модель ингредиента'''
+
     name = models.TextField(max_length=64)
     measurement_unit = models.CharField(max_length=16)
 
@@ -28,16 +31,28 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return self.name
-'''Модель рецепта'''
+
+
 class Recipe(models.Model):
-    author = models.ForeignKey(User, related_name='HHH', on_delete=models.CASCADE)
+    '''Модель рецепта'''
+    author = models.ForeignKey(
+        User, related_name='HHH', on_delete=models.CASCADE
+    )
     name = models.CharField(max_length=64)
-    image = models.ImageField(upload_to='recipes/images/', null=True, default=None)
+    image = models.ImageField(
+        upload_to='recipes/images/', null=True, default=None
+    )
     text = models.TextField()
-    ingredients = models.ManyToManyField(Ingredient, through='RecipeIngredient')
-    tags = models.ManyToManyField(Tag, through='RecipeTag', related_name='recipes')
+    ingredients = models.ManyToManyField(
+        Ingredient, through='RecipeIngredient'
+    )
+    tags = models.ManyToManyField(
+        Tag, through='RecipeTag', related_name='recipes'
+    )
     cooking_time = models.IntegerField()
-    created = models.DateField(auto_now_add=True, verbose_name='Дата и время публикации рецепта')
+    created = models.DateField(
+        auto_now_add=True, verbose_name='Дата и время публикации рецепта'
+    )
 
     class Meta:
         verbose_name = 'Рецепт'
@@ -46,21 +61,26 @@ class Recipe(models.Model):
     def __str__(self):
         return self.name
 
+
 class RecipeIngredient(models.Model):
-    recipe = models.ForeignKey(Recipe, related_name='recipeingredient_set', on_delete=models.CASCADE)
+    recipe = models.ForeignKey(
+        Recipe, related_name='recipeingredient_set', on_delete=models.CASCADE
+    )
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     amount = models.IntegerField()
 
-'''Many to Many Рецепт-Тэг'''
+
 class RecipeTag(models.Model):
+    '''Many to Many Рецепт-Тэг'''
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.tag.name
 
-'''Many to Many Рецепт-Юзер'''
+
 class Favorites(models.Model):
+    '''Many to Many Рецепт-Юзер'''
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
@@ -68,8 +88,9 @@ class Favorites(models.Model):
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные'
 
-'''Many to Many Подписки'''
+
 class Follow(models.Model):
+    '''Many to Many Подписки'''
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -96,7 +117,8 @@ class Follow(models.Model):
     def __str__(self):
         return f'{self.user.username} follows {self.following.username}'
 
-'''Many to Many Рецепт-Юзер'''
+
 class BuyList(models.Model):
+    '''Many to Many Рецепт-Юзер'''
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)

@@ -15,16 +15,40 @@ router.register(r'tags', TagViewSet, basename='tags')
 
 urlpatterns = [
     # Избранные
-    path('recipes/<int:id>/favorite/', FavoriteRecipeAPIView.as_view(), name='recipe-favorite'),
+    path(
+        'recipes/<int:id>/favorite/',
+        FavoriteRecipeAPIView.as_view(),
+        name='recipe-favorite'
+    ),
     # Подписки
-    path('users/subscriptions/', SubscriptionsAPIView.as_view(), name='user-subscriptions'),
-    path('users/<int:id>/subscribe/', SubscribeAPIView.as_view(), name='subscribe'),
+    path(
+        'users/subscriptions/',
+        SubscriptionsAPIView.as_view(),
+        name='user-subscriptions'
+    ),
+    path(
+        'users/<int:id>/subscribe/',
+        SubscribeAPIView.as_view(),
+        name='subscribe'
+    ),
     # Ингридиенты
     path('ingredients/', IngredientAPIView.as_view(), name='ingredient-list'),
-    path('ingredients/<int:id>/', IngredientAPIView.as_view(), name='ingredient-detail'),
+    path(
+        'ingredients/<int:id>/',
+        IngredientAPIView.as_view(),
+        name='ingredient-detail'
+    ),
     # Список покупок
-    path('recipes/<int:id>/shopping_cart/', BuyListAPIView.as_view(), name='recipe-favorite'),
-    path('recipes/download_shopping_cart/', DownloadShoppingCartAPIView.as_view(), name='download-favorite'),
+    path(
+        'recipes/<int:id>/shopping_cart/',
+        BuyListAPIView.as_view(),
+        name='recipe-favorite'
+    ),
+    path(
+        'recipes/download_shopping_cart/',
+        DownloadShoppingCartAPIView.as_view(),
+        name='download-favorite'
+    ),
     # Рецепты
     # Пользователи
     path('', include(router.urls)),
