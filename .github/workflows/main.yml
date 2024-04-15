@@ -91,7 +91,6 @@
     - name: Install dependencies
       run: |
         cd frontend/
-        npm install
         npm ci
     - name: Test frontend
       run: |
