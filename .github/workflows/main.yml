@@ -79,15 +79,6 @@
       uses: actions/setup-node@v3
       with:
         node-version: 18
-# #___________________
-#     - name: Cache node modules
-#       uses: actions/cache@v2
-#       with:
-#         path: ~/.npm
-#         key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-#         restore-keys: |
-#           ${{ runner.os }}-npm-
-# #____________________
     - name: Install dependencies
       run: |
         cd frontend/
