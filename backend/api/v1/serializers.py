@@ -146,9 +146,9 @@ class FollowSerializer(serializers.ModelSerializer):
 
 
 class BuyListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Recipe
-        fields = ['id', 'name', 'image', 'cooking_time']
+    # class Meta:
+    #     model = Recipe
+    #     fields = ['id', 'name', 'image', 'cooking_time']
 
     class Meta:
         model = RecipeIngredient
@@ -323,25 +323,25 @@ class RecipeSerializer(serializers.ModelSerializer):
         return instance
 
     def validate(self, attrs):
-        if 'ingredients' not in self.initial_data:
-            raise serializers.ValidationError(
-                {"error": "Field 'ingredients' is required."}
-            )
+        self.validate_ingredients(self.initial_data.get('ingredients'))
+        self.validate_tags(attrs.get('tags'))
+        self.validate_cooking_time(attrs.get('cooking_time'))
+        self.validate_required_fields(attrs, ['tags', 'cooking_time', 'image'])
+        return attrs
 
-        if not self.initial_data['ingredients']:
+    def validate_ingredients(self, ingredients):
+        if not ingredients:
             raise serializers.ValidationError(
                 {"error": "At least one ingredient is required."}
             )
 
-        ingredient_ids = [
-            ingredient['id'] for ingredient in self.initial_data['ingredients']
-        ]
+        ingredient_ids = [ingredient['id'] for ingredient in ingredients]
         if not Ingredient.objects.filter(pk__in=ingredient_ids).exists():
             raise serializers.ValidationError(
                 {"error": "One or more ingredients do not exist."}
             )
 
-        for ingredient in self.initial_data['ingredients']:
+        for ingredient in ingredients:
             if int(ingredient.get('amount', 0)) < 1:
                 raise serializers.ValidationError(
                     {"error": "Amount of each ingredient must be at least 1."}
@@ -352,45 +352,37 @@ class RecipeSerializer(serializers.ModelSerializer):
                 {"error": "Duplicate ingredients are not allowed."}
             )
 
-        # Проверка наличия поля 'tags'
-        if 'tags' not in attrs:
+    def validate_tags(self, tags):
+        if tags is None:
             raise serializers.ValidationError(
                 {"error": "Field 'tags' is required."}
             )
 
-        # Проверка наличия тегов
-        if not attrs['tags']:
+        if not tags:
             raise serializers.ValidationError(
                 {"error": "Field 'tags' cannot be empty."}
             )
 
-        # Проверка дублирования тегов
-        tags_ids = [tag.id for tag in attrs['tags']]
+        tags_ids = [tag.id for tag in tags]
         if len(tags_ids) != len(set(tags_ids)):
             raise serializers.ValidationError(
                 {"error": "Duplicate tags are not allowed."}
             )
 
-        # Проверка наличия поля 'cooking_time'
-        if 'cooking_time' not in attrs:
+    def validate_cooking_time(self, cooking_time):
+        if cooking_time is None:
             raise serializers.ValidationError(
                 {"error": "Field 'cooking_time' is required."}
             )
 
-        # Проверка времени готовки
-        cooking_time = attrs['cooking_time']
-        if cooking_time == "":
-            raise serializers.ValidationError(
-                {"error": "Cooking time must be specified."}
-            )
-        if cooking_time < 1:
+        if cooking_time == "" or cooking_time < 1:
             raise serializers.ValidationError(
                 {"error": "Cooking time cannot be less than 1 minute."}
             )
 
-        if 'image' not in attrs:
-            raise serializers.ValidationError(
-                {"error": "Field 'image' is required."}
-            )
-
-        return attrs
+    def validate_required_fields(self, attrs, required_fields):
+        for field in required_fields:
+            if field not in attrs:
+                raise serializers.ValidationError(
+                    {"error": f"Field '{field}' is required."}
+                )
