@@ -1,0 +1,2 @@
+max_length = 150
+MAX_REGISTRATION_LENGTH = 150

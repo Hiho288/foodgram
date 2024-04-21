@@ -16,7 +16,7 @@ router.register(r'tags', TagViewSet, basename='tags')
 urlpatterns = [
     # Избранные
     path(
-        'recipes/<int:id>/favorite/',
+        'recipes/<int:recipe_id>/favorite/',
         FavoriteRecipeAPIView.as_view(),
         name='recipe-favorite'
     ),
@@ -27,20 +27,20 @@ urlpatterns = [
         name='user-subscriptions'
     ),
     path(
-        'users/<int:id>/subscribe/',
+        'users/<int:user_id>/subscribe/',
         SubscribeAPIView.as_view(),
         name='subscribe'
     ),
     # Ингридиенты
     path('ingredients/', IngredientAPIView.as_view(), name='ingredient-list'),
     path(
-        'ingredients/<int:id>/',
+        'ingredients/<int:ingredient_id>/',
         IngredientAPIView.as_view(),
         name='ingredient-detail'
     ),
     # Список покупок
     path(
-        'recipes/<int:id>/shopping_cart/',
+        'recipes/<int:recipe_id>/shopping_cart/',
         BuyListAPIView.as_view(),
         name='recipe-favorite'
     ),

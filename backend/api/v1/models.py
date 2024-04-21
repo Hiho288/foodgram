@@ -1,15 +1,27 @@
-from django.contrib.auth import get_user_model
+from colorfield.fields import ColorField
+from django.contrib.auth.models import AbstractUser
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-'''Юзер'''
-User = get_user_model()
+MIN_INGREDIENT_AMOUNT = 1
+MIN_COOKING_TIME = 1
+MAX_COOKING_TIME = 480
+
+
+class User(AbstractUser):
+    """Юзер"""
+    def get_follower_count(self):
+        return self.followers.count()
+
+    def get_recipe_count(self):
+        return self.recipes.count()
 
 
 class Tag(models.Model):
-    '''Модель тега'''
-    name = models.CharField(max_length=16)
-    color = models.CharField(max_length=16)
-    slug = models.SlugField(max_length=16)
+    """Модель тега"""
+    name = models.CharField()
+    color = ColorField(format="hexa", default='#0a0a0a')
+    slug = models.SlugField()
 
     class Meta:
         verbose_name = 'Тег'
@@ -20,7 +32,7 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
-    '''Модель ингредиента'''
+    """Модель ингредиента"""
 
     name = models.TextField(max_length=64)
     measurement_unit = models.CharField(max_length=16)
@@ -34,9 +46,9 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
-    '''Модель рецепта'''
+    """Модель рецепта"""
     author = models.ForeignKey(
-        User, related_name='HHH', on_delete=models.CASCADE
+        User, related_name='recipes', on_delete=models.CASCADE
     )
     name = models.CharField(max_length=64)
     image = models.ImageField(
@@ -44,14 +56,20 @@ class Recipe(models.Model):
     )
     text = models.TextField()
     ingredients = models.ManyToManyField(
-        Ingredient, through='RecipeIngredient'
+        Ingredient, through='RecipeIngredient', required=True
     )
     tags = models.ManyToManyField(
         Tag, through='RecipeTag', related_name='recipes'
     )
-    cooking_time = models.IntegerField()
+    cooking_time = models.PositiveSmallIntegerField(
+        validators=[
+            MinValueValidator(MIN_COOKING_TIME),
+            MaxValueValidator(MAX_COOKING_TIME)
+        ]
+    )
     created = models.DateField(
-        auto_now_add=True, verbose_name='Дата и время публикации рецепта'
+        auto_now_add=True,
+        verbose_name='Дата и время публикации рецепта'
     )
 
     class Meta:
@@ -67,11 +85,15 @@ class RecipeIngredient(models.Model):
         Recipe, related_name='recipeingredient_set', on_delete=models.CASCADE
     )
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    amount = models.IntegerField()
+    amount = models.PositiveSmallIntegerField(
+        validators=[
+            MinValueValidator(MIN_INGREDIENT_AMOUNT),
+        ]
+    )
 
 
 class RecipeTag(models.Model):
-    '''Many to Many Рецепт-Тэг'''
+    """Many to Many Рецепт-Тэг"""
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
 
@@ -79,28 +101,33 @@ class RecipeTag(models.Model):
         return self.tag.name
 
 
-class Favorites(models.Model):
-    '''Many to Many Рецепт-Юзер'''
+class Favorite(models.Model):
+    """Many to Many Рецепт-Юзер"""
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранные'
+        constraints = (
+            models.UniqueConstraint(
+                fields=('recipe', 'user'),
+            ),
+        )
 
 
 class Follow(models.Model):
-    '''Many to Many Подписки'''
+    """Many to Many Подписки"""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='following',
+        related_name='followers',
         verbose_name='Пользователь',
     )
     following = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='user',
+        related_name='following',
         verbose_name='Подписан на',
     )
 
@@ -111,6 +138,13 @@ class Follow(models.Model):
             models.UniqueConstraint(
                 fields=['user', 'following'],
                 name='unique__following',
+            ),
+            models.CheckConstraint(
+                check=models.ExpressionWrapper(
+                    models.F('user') != models.F('following'),
+                    output_field=models.BooleanField()
+                ),
+                name='user_cannot_follow_self'
             )
         ]
 
@@ -119,6 +153,15 @@ class Follow(models.Model):
 
 
 class BuyList(models.Model):
-    '''Many to Many Рецепт-Юзер'''
+    """Many to Many Рецепт-Юзер"""
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = 'Карточка покупок'
+        verbose_name_plural = 'Карточки покупок'
+        constraints = (
+            models.UniqueConstraint(
+                fields=('recipe', 'user'),
+            ),
+        )

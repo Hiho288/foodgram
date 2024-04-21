@@ -14,7 +14,7 @@ services:
   backend:
     depends_on:
       - db
-    build: ./backend
+    image: hiho288/foodgram_backend
     env_file: .env
     volumes:
       - static:/backend_static
@@ -22,16 +22,16 @@ services:
   frontend:
     depends_on:
       - backend
-    build: ./frontend
+    image: hiho288/foodgram_frontend
     env_file: .env
     command: cp -r /app/build/. /frontend_static/
     volumes:
       - static:/frontend_static
   gateway:
-    build: ./nginx
+    image: hiho288/foodgram_gateway
     env_file: .env
     volumes:
       - static:/staticfiles/
       - media:/var/media/
     ports:
-      - 8000:80
+      - 9000:80
