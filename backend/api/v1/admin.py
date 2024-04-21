@@ -1,11 +1,8 @@
 from django.contrib import admin
-from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.db.models import Count
 
 from .models import Ingredient, Recipe, RecipeIngredient, Tag, User
-
-User = get_user_model()
 
 
 class UserAdmin(BaseUserAdmin):
