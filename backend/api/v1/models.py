@@ -2,7 +2,6 @@ from colorfield.fields import ColorField
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-
 from foodgram_backend.constants import (MAX_COOKING_TIME,
                                         MAX_INGREDIENT_AMOUNT,
                                         MAX_MEASUREMENT_UNIT_LENGTH,
