@@ -4,10 +4,29 @@ from .models import Recipe
 
 
 class RecipeFilter(django_filters.FilterSet):
-    author = django_filters.CharFilter(
-        field_name='author__name', lookup_expr='icontains'
+    tags = django_filters.CharFilter(field_name='tags__name', lookup_expr='in')
+    is_favorited = django_filters.BooleanFilter(method='filter_is_favorited')
+    is_in_shopping_cart = django_filters.BooleanFilter(
+        method='filter_is_in_shopping_cart'
     )
 
     class Meta:
         model = Recipe
-        fields = ['author']
+        fields = ['author', 'tags']
+
+    def filter_is_favorited(self, queryset, value):
+        if value:
+            return queryset.filter(favorited_by__user=self.request.user)
+        return queryset
+
+    def filter_is_in_shopping_cart(self, queryset, value):
+        if value:
+            return queryset.filter(buylist__user=self.request.user)
+        return queryset
+
+
+class IngredientFilter(django_filters.FilterSet):
+
+    class Meta:
+        model = Recipe
+        fields = ['name']

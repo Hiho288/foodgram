@@ -12,13 +12,13 @@ class UserAdmin(BaseUserAdmin):
         'get_recipe_count'
     )
 
+    @admin.display(description='Количество подписчиков')
     def follower_count(self, obj):
         return obj.get_follower_count()
-    follower_count.short_description = 'Количество подписчиков'
 
+    @admin.display(description='Количество рецептов')
     def recipe_count(self, obj):
         return obj.get_recipe_count()
-    recipe_count.short_description = 'Количество рецептов'
 
 
 @admin.register(Tag)
@@ -58,17 +58,16 @@ class RecipeAdmin(admin.ModelAdmin):
     def favorites_count(self, obj):
         return obj.favorites_count
     favorites_count.admin_order_field = 'favorites_count'
-    favorites_count.short_description = 'В избранном'
 
+    @admin.display(description='Ингредиенты')
     def ingredient_list(self, obj):
         return ", ".join(
             [ingredient.name for ingredient in obj.ingredients.all()]
         )
-    ingredient_list.short_description = 'Ингредиенты'
 
+    @admin.display(description='Теги')
     def tag_list(self, obj):
         return ", ".join([tag.name for tag in obj.tags.all()])
-    tag_list.short_description = 'Теги'
 
 
 admin.site.empty_value_display = 'Не задано'

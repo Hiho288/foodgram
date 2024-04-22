@@ -32,10 +32,10 @@ urlpatterns = [
         name='subscribe'
     ),
     # Ингридиенты
-    path('ingredients/', IngredientAPIView.as_view(), name='ingredient-list'),
+    path('ingredients/', IngredientAPIView, name='ingredient-list'),
     path(
         'ingredients/<int:ingredient_id>/',
-        IngredientAPIView.as_view(),
+        IngredientAPIView,
         name='ingredient-detail'
     ),
     # Список покупок

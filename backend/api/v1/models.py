@@ -3,9 +3,11 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-MIN_INGREDIENT_AMOUNT = 1
-MIN_COOKING_TIME = 1
-MAX_COOKING_TIME = 480
+from foodgram_backend.constants import (MAX_COOKING_TIME,
+                                        MAX_INGREDIENT_AMOUNT,
+                                        MAX_MEASUREMENT_UNIT_LENGTH,
+                                        MAX_NAME_LENGTH, MIN_COOKING_TIME,
+                                        MIN_INGREDIENT_AMOUNT)
 
 
 class User(AbstractUser):
@@ -19,7 +21,7 @@ class User(AbstractUser):
 
 class Tag(models.Model):
     """Модель тега"""
-    name = models.CharField()
+    name = models.CharField(max_length=MAX_NAME_LENGTH)
     color = ColorField(format="hexa", default='#0a0a0a')
     slug = models.SlugField()
 
@@ -34,8 +36,8 @@ class Tag(models.Model):
 class Ingredient(models.Model):
     """Модель ингредиента"""
 
-    name = models.TextField(max_length=64)
-    measurement_unit = models.CharField(max_length=16)
+    name = models.TextField(max_length=MAX_NAME_LENGTH)
+    measurement_unit = models.CharField(max_length=MAX_MEASUREMENT_UNIT_LENGTH)
 
     class Meta:
         verbose_name = 'Ингридиент'
@@ -50,13 +52,13 @@ class Recipe(models.Model):
     author = models.ForeignKey(
         User, related_name='recipes', on_delete=models.CASCADE
     )
-    name = models.CharField(max_length=64)
+    name = models.CharField(max_length=MAX_NAME_LENGTH)
     image = models.ImageField(
         upload_to='recipes/images/', null=True, default=None
     )
     text = models.TextField()
     ingredients = models.ManyToManyField(
-        Ingredient, through='RecipeIngredient', required=True
+        Ingredient, through='RecipeIngredient'
     )
     tags = models.ManyToManyField(
         Tag, through='RecipeTag', related_name='recipes'
@@ -88,6 +90,7 @@ class RecipeIngredient(models.Model):
     amount = models.PositiveSmallIntegerField(
         validators=[
             MinValueValidator(MIN_INGREDIENT_AMOUNT),
+            MaxValueValidator(MAX_INGREDIENT_AMOUNT)
         ]
     )
 
@@ -112,6 +115,7 @@ class Favorite(models.Model):
         constraints = (
             models.UniqueConstraint(
                 fields=('recipe', 'user'),
+                name='unique__recipe',
             ),
         )
 
@@ -163,5 +167,6 @@ class BuyList(models.Model):
         constraints = (
             models.UniqueConstraint(
                 fields=('recipe', 'user'),
+                name='unique__recipe_buylist',
             ),
         )

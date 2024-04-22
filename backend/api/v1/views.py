@@ -5,29 +5,24 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.pagination import (LimitOffsetPagination,
-                                       PageNumberPagination)
+from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from .filters import RecipeFilter
-from .models import (BuyList, Favorite, Follow, Ingredient, Recipe,
-                     RecipeIngredient, Tag, User)
-from .serializers import (BuyListSerializer, FollowSerializer,
-                          IngredientSerializer, RecipeReadSerializer,
-                          RecipeWriteSerializer, SubscribeSerializer,
-                          TagSerializer, UserRegistrationSerializer,
-                          UserSerializer)
+from .filters import IngredientFilter, RecipeFilter
+from .models import (BuyList, Favorite, Follow, Recipe, RecipeIngredient, Tag,
+                     User)
+from .paginators import RecipePaginator
+from .serializers import (BuyListSerializer, FavoriteSerializer,
+                          FollowSerializer, RecipeReadSerializer,
+                          TagSerializer, UserSerializer)
 
 
-class RecipePaginator(PageNumberPagination):
-    page_size = 6
-
-
-def post_method(self, request, recipe_id, model):
+def post_method(request, recipe_id, model, model_serializer):
     user = request.user
     recipe = get_object_or_404(Recipe, pk=recipe_id)
 
@@ -38,11 +33,11 @@ def post_method(self, request, recipe_id, model):
         )
     model.objects.create(user=user, recipe=recipe)
 
-    serializer = BuyListSerializer(recipe)
+    serializer = model_serializer(recipe)
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-def delete_method(self, request, id, model):
+def delete_method(request, id, model):
     user = request.user
     recipe = get_object_or_404(Recipe, pk=id)
 
@@ -71,35 +66,10 @@ class UserViewSet(ModelViewSet):
     pagination_class = LimitOffsetPagination
 
     def create(self, request, *args, **kwargs):
-        required_fields = [
-            'username', 'email',
-            'password', 'first_name',
-            'last_name'
-        ]
-        data = request.data
-
-        # user = User.objects.get(username=request.data.username)
-        if not all(field in data for field in required_fields):
-            return Response(
-                {"error": "Все поля обязательны к заполнению"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        serializer = UserRegistrationSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response({
-                "email": user.email,
-                "id": user.id,
-                "username": user.username,
-                "first_name": user.first_name,
-                "last_name": user.last_name
-            }, status=status.HTTP_201_CREATED)
-        else:
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(
         detail=False,
@@ -140,10 +110,10 @@ class UserViewSet(ModelViewSet):
 class FavoriteRecipeAPIView(APIView):
 
     def post(self, request, id):
-        post_method(model=Favorite)
+        return post_method(model=Favorite, model_serializer=FavoriteSerializer)
 
     def delete(self, request, id):
-        delete_method(model=Favorite)
+        return delete_method(model=Favorite)
 
 
 # ПОДПИСКИ
@@ -158,63 +128,48 @@ class SubscriptionsAPIView(APIView):
 class SubscribeAPIView(APIView):
 
     def post(self, request, user_id):
-        serializer = SubscribeSerializer(
-            data={'following_id': user_id}, context={'request': request}
-        )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {'status': 'subscribed'},
-                status=status.HTTP_201_CREATED
-            )
+        user = request.user
+        following = User.objects.get(pk=user_id)
+        if Follow.objects.filter(user=user, following=following).exists():
+            raise ValidationError('Уже подписаны.')
+
+        Follow.objects.create(user=user, following=following)
         return Response(
-            serializer.errors,
-            status=status.HTTP_400_BAD_REQUEST
+            {'detail': 'Подписка успешно создана.'},
+            status=status.HTTP_201_CREATED
         )
 
     def delete(self, request, user_id):
-        serializer = SubscribeSerializer(
-            data={'following_id': user_id}, context={'request': request}
-        )
-        if serializer.is_valid():
-            serializer.save()
+        user = request.user
+        following = User.objects.get(pk=user_id)
+        subscription = Follow.objects.filter(user=user, following=following)
+        if subscription.exists():
+            subscription.delete()
             return Response(
-                {'status': 'unsubscribed'},
+                {'detail': 'Подписка удалена.'},
                 status=status.HTTP_204_NO_CONTENT
             )
-        return Response(
-            serializer.errors,
-            status=status.HTTP_404_NOT_FOUND
-        )
+        else:
+            return Response(
+                {'detail': 'Подписка не найдена.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 # СПИСОК ИЛИ КОНКРЕТНЫЙ ИНГРИДИЕНТ
-class IngredientAPIView(APIView):
+class IngredientAPIView(ModelViewSet):
     permission_classes = [AllowAny]
-
-    def get(self, request, ingredient_id=None):
-        if ingredient_id:
-            # Получение деталей ингредиента по ID
-            ingredient = get_object_or_404(Ingredient, pk=ingredient_id)
-            serializer = IngredientSerializer(ingredient)
-        else:
-            # Получение списка всех ингредиентов с возможной фильтрацией
-            name_start = request.query_params.get('name', None)
-            ingredients = Ingredient.objects.all()
-            if name_start is not None:
-                ingredients = ingredients.filter(name__startswith=name_start)
-            serializer = IngredientSerializer(ingredients, many=True)
-        return Response(serializer.data)
+    filter_class = IngredientFilter
 
 
 # СПИСОК ПОКУПОК
 class BuyListAPIView(APIView):
 
     def post(self, request, id):
-        post_method(model=BuyList)
+        return post_method(model=BuyList, model_serializer=BuyListSerializer)
 
     def delete(self, request, id):
-        delete_method(model=BuyList)
+        return delete_method(model=BuyList)
 
 
 # ЛИСТ ПОКУПОК
@@ -222,16 +177,19 @@ class DownloadShoppingCartAPIView(APIView):
 
     def get(self, request):
         user = request.user
-        shopping_cart = BuyList.objects.filter(user=user)
+        shopping_cart = BuyList.objects.filter(
+            user=user
+        ).select_related('recipe')
         ingredients_sum = defaultdict(float)
 
         for item in shopping_cart:
             recipe_ingredients = RecipeIngredient.objects.filter(
                 recipe=item.recipe
-            )
-            for ri in recipe_ingredients:
-                key = f"{ri.ingredient.name}({ri.ingredient.measurement_unit})"
-                ingredients_sum[key] += ri.amount
+            ).select_related('ingredient')
+            for ingredient in recipe_ingredients:
+                ingredients_sum[
+                    ingredient.ingredient.name
+                ] += ingredient.amount
 
         filename = "shopping_list.txt"
         content = "\n".join(
@@ -254,49 +212,10 @@ class RecipeViewSet(ModelViewSet):
     def list(self, request):
         queryset = Recipe.objects.all()
 
-        # # kword limit
-        # limit = request.query_params.get('limit')
-        # if limit:
-        #     try:
-        #         page_size = int(limit)
-        #     except ValueError:
-        #         return Response(
-        #             {"error": "Limit must be an integer."},
-        #             status=status.HTTP_400_BAD_REQUEST
-        #         )
-
-        # kword author
-        author = request.query_params.get('author')
-        if author:
-            queryset = queryset.filter(author=author)
-
-        # kword tags
-        tags = request.query_params.getlist('tags')
-        if tags:
-            queryset = queryset.filter(tags__name__in=tags)
-
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request)
-        serializer = RecipeReadSerializer(
+        serializer = self.serializer_class(
             page, many=True, context={'request': request}
         )
         paginated_response = paginator.get_paginated_response(serializer.data)
         return paginated_response
-        #         Response({
-        #     'count': paginator.page.paginator.count,
-        #     'next': paginated_response.data.get('next'),
-        #     'previous': paginated_response.data.get('previous'),
-        #     'results': paginated_response.data.get('results')
-        # })
-
-    def perform_create(self, request):
-        serializer = RecipeWriteSerializer(
-            data=request.data, context={'request': request}
-        )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(
-                serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
