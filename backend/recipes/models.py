@@ -1,21 +1,13 @@
 from colorfield.fields import ColorField
-from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
 from foodgram_backend.constants import (MAX_COOKING_TIME,
                                         MAX_INGREDIENT_AMOUNT,
                                         MAX_MEASUREMENT_UNIT_LENGTH,
                                         MAX_NAME_LENGTH, MIN_COOKING_TIME,
                                         MIN_INGREDIENT_AMOUNT)
-
-
-class User(AbstractUser):
-    """Юзер"""
-    def get_follower_count(self):
-        return self.followers.count()
-
-    def get_recipe_count(self):
-        return self.recipes.count()
+from users.models import User
 
 
 class Tag(models.Model):
@@ -117,42 +109,6 @@ class Favorite(models.Model):
                 name='unique__recipe',
             ),
         )
-
-
-class Follow(models.Model):
-    """Many to Many Подписки"""
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='followers',
-        verbose_name='Пользователь',
-    )
-    following = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='following',
-        verbose_name='Подписан на',
-    )
-
-    class Meta:
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'following'],
-                name='unique__following',
-            ),
-            models.CheckConstraint(
-                check=models.ExpressionWrapper(
-                    models.F('user') != models.F('following'),
-                    output_field=models.BooleanField()
-                ),
-                name='user_cannot_follow_self'
-            )
-        ]
-
-    def __str__(self):
-        return f'{self.user.username} follows {self.following.username}'
 
 
 class BuyList(models.Model):

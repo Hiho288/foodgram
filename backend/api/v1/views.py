@@ -13,9 +13,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
+from recipes.models import BuyList, Favorite, Recipe, RecipeIngredient, Tag
+from users.models import Follow, User
+
 from .filters import IngredientFilter, RecipeFilter
-from .models import (BuyList, Favorite, Follow, Recipe, RecipeIngredient, Tag,
-                     User)
 from .paginators import RecipePaginator
 from .serializers import (BuyListSerializer, FavoriteSerializer,
                           FollowSerializer, RecipeReadSerializer,

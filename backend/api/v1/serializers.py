@@ -1,13 +1,15 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import RegexValidator
-from foodgram_backend.constants import MAX_REGISTRATION_LENGTH
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
 
+from foodgram_backend.constants import MAX_REGISTRATION_LENGTH
+from recipes.models import (BuyList, Favorite, Ingredient, Recipe,
+                            RecipeIngredient, RecipeTag, Tag)
+from users.models import Follow
+
 from .fields import Base64ImageField, Hex2NameColor
-from .models import (BuyList, Favorite, Follow, Ingredient, Recipe,
-                     RecipeIngredient, RecipeTag, Tag)
 
 User = get_user_model()
 
