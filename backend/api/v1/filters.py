@@ -1,4 +1,3 @@
-from django_filters import filters
 import django_filters
 
 from recipes.models import Ingredient, Recipe
@@ -27,7 +26,9 @@ class RecipeFilter(django_filters.FilterSet):
 
 
 class IngredientFilter(django_filters.FilterSet):
-    name = django_filters.CharFilter(field_name='name', lookup_expr='startswith')
+    name = django_filters.CharFilter(
+        field_name='name', lookup_expr='startswith'
+    )
 
     class Meta:
         model = Ingredient

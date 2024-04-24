@@ -22,7 +22,7 @@ from .paginators import RecipePaginator
 from .permissions import IsAuthorOrReadOnly
 from .serializers import (BuyListSerializer, FavoriteSerializer,
                           FollowSerializer, IngredientSerializer,
-                          RecipeReadSerializer, RecipeWriteSerializer, TagSerializer, UserSerializer)
+                          RecipeReadSerializer, TagSerializer, UserSerializer)
 
 
 def post_method(request, recipe_id, model, model_serializer):
@@ -168,8 +168,6 @@ class IngredientAPIView(ModelViewSet):
     filterset_class = IngredientFilter
     pagination_class = None
 
-    # def get_queryset(self):
-    #     return Ingredient.objects.filter(active=True)
 
 # СПИСОК ПОКУПОК
 class BuyListAPIView(APIView):
@@ -222,6 +220,3 @@ class RecipeViewSet(ModelViewSet):
     filter_class = RecipeFilter
     pagination_class = RecipePaginator
     permission_classes = [IsAuthorOrReadOnly]
-
-    def post():
-        serializer_class = RecipeWriteSerializer

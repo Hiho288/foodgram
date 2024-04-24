@@ -113,7 +113,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
-    
+
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
         if user.is_authenticated:
@@ -264,7 +264,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             for ingredient in ingredients_data
         ]
         RecipeIngredient.objects.bulk_create(ingredient_instances)
-    
+
     def set_tags(self, recipe, tags_data):
         # Логика для установки тегов для рецепта
         recipe.tags.set(tags_data)
