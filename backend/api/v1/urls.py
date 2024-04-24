@@ -11,6 +11,7 @@ router = DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'recipes', RecipeViewSet, basename='recipe')
 router.register(r'tags', TagViewSet, basename='tags')
+router.register(r'ingredients', IngredientAPIView, basename='ingredients')
 
 
 urlpatterns = [
@@ -32,7 +33,7 @@ urlpatterns = [
         name='subscribe'
     ),
     # Ингридиенты
-    path('ingredients/', IngredientAPIView, name='ingredient-list'),
+    # path('ingredients/', IngredientAPIView, name='ingredient-list'),
     path(
         'ingredients/<int:ingredient_id>/',
         IngredientAPIView,

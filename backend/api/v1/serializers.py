@@ -56,8 +56,10 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
     def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        return obj.following.filter(user=request.user).exists()
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return obj.following.filter(user=user).exists()
+        return False
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -111,6 +113,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+    
+    def get_is_subscribed(self, obj):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return obj.following.filter(user=user).exists()
+        return False
 
 
 class AuthorSerializer(serializers.ModelSerializer):
@@ -188,7 +196,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 class RecipeTagSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
-        queryset=Ingredient.objects.all(), source='ingredient'
+        queryset=Tag.objects.all(), source='tag'
     )
 
     class Meta:
@@ -256,6 +264,10 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             for ingredient in ingredients_data
         ]
         RecipeIngredient.objects.bulk_create(ingredient_instances)
+    
+    def set_tags(self, recipe, tags_data):
+        # Логика для установки тегов для рецепта
+        recipe.tags.set(tags_data)
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop('recipeingredient_set', [])
