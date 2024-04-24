@@ -33,7 +33,7 @@ class Follow(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=['user', 'following'],
-                name='unique__following',
+                name='uniq__following',
             ),
         ]
 

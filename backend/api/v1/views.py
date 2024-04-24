@@ -3,24 +3,26 @@ from collections import defaultdict
 from django.contrib.auth.hashers import check_password
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import (AllowAny, IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from recipes.models import BuyList, Favorite, Recipe, RecipeIngredient, Tag
+from recipes.models import (BuyList, Favorite, Ingredient, Recipe,
+                            RecipeIngredient, Tag)
 from users.models import Follow, User
 
 from .filters import IngredientFilter, RecipeFilter
 from .paginators import RecipePaginator
+from .permissions import IsAuthorOrReadOnly
 from .serializers import (BuyListSerializer, FavoriteSerializer,
-                          FollowSerializer, RecipeReadSerializer,
-                          TagSerializer, UserSerializer)
+                          FollowSerializer, IngredientSerializer,
+                          RecipeReadSerializer, TagSerializer, UserSerializer)
 
 
 def post_method(request, recipe_id, model, model_serializer):
@@ -38,9 +40,9 @@ def post_method(request, recipe_id, model, model_serializer):
     return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-def delete_method(request, id, model):
+def delete_method(request, recipe_id, model):
     user = request.user
-    recipe = get_object_or_404(Recipe, pk=id)
+    recipe = get_object_or_404(Recipe, pk=recipe_id)
 
     favorite = model.objects.filter(user=user, recipe=recipe)
     if favorite.exists():
@@ -66,12 +68,6 @@ class UserViewSet(ModelViewSet):
     serializer_class = UserSerializer
     pagination_class = LimitOffsetPagination
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
     @action(
         detail=False,
         methods=['get'],
@@ -79,7 +75,7 @@ class UserViewSet(ModelViewSet):
     )
     def me(self, request):
         user = request.user
-        serializer = UserSerializer(user)
+        serializer = UserSerializer(user, context={'request': request})
         return Response(serializer.data)
 
     @action(
@@ -111,10 +107,15 @@ class UserViewSet(ModelViewSet):
 class FavoriteRecipeAPIView(APIView):
 
     def post(self, request, id):
-        return post_method(model=Favorite, model_serializer=FavoriteSerializer)
+        return post_method(
+            request,
+            recipe_id=id,
+            model=Favorite,
+            model_serializer=FavoriteSerializer
+        )
 
     def delete(self, request, id):
-        return delete_method(model=Favorite)
+        return delete_method(request, recipe_id=id, model=Favorite)
 
 
 # ПОДПИСКИ
@@ -159,18 +160,26 @@ class SubscribeAPIView(APIView):
 
 # СПИСОК ИЛИ КОНКРЕТНЫЙ ИНГРИДИЕНТ
 class IngredientAPIView(ModelViewSet):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
     permission_classes = [AllowAny]
-    filter_class = IngredientFilter
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
 
 
 # СПИСОК ПОКУПОК
 class BuyListAPIView(APIView):
 
     def post(self, request, id):
-        return post_method(model=BuyList, model_serializer=BuyListSerializer)
+        return post_method(
+            request,
+            recipe_id=id,
+            model=BuyList,
+            model_serializer=BuyListSerializer
+        )
 
     def delete(self, request, id):
-        return delete_method(model=BuyList)
+        return delete_method(request, recipe_id=id, model=BuyList)
 
 
 # ЛИСТ ПОКУПОК
@@ -208,15 +217,4 @@ class RecipeViewSet(ModelViewSet):
     serializer_class = RecipeReadSerializer
     filter_class = RecipeFilter
     pagination_class = RecipePaginator
-    permission_classes = [IsAuthenticatedOrReadOnly]
-
-    def list(self, request):
-        queryset = Recipe.objects.all()
-
-        paginator = self.pagination_class()
-        page = paginator.paginate_queryset(queryset, request)
-        serializer = self.serializer_class(
-            page, many=True, context={'request': request}
-        )
-        paginated_response = paginator.get_paginated_response(serializer.data)
-        return paginated_response
+    permission_classes = [IsAuthorOrReadOnly]

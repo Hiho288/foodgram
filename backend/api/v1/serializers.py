@@ -1,20 +1,18 @@
-from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import RegexValidator
 from rest_framework import serializers
-from rest_framework.exceptions import PermissionDenied
 
 from foodgram_backend.constants import MAX_REGISTRATION_LENGTH
 from recipes.models import (BuyList, Favorite, Ingredient, Recipe,
                             RecipeIngredient, RecipeTag, Tag)
-from users.models import Follow
+from users.models import Follow, User
 
 from .fields import Base64ImageField, Hex2NameColor
 
-User = get_user_model()
-
 
 class UserSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = (
@@ -56,6 +54,10 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(new_password)
         instance.save()
         return instance
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        return obj.following.filter(user=request.user).exists()
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -123,7 +125,7 @@ class AuthorSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        return obj.followers.filter(user=request.user).exists()
+        return obj.following.filter(user=request.user).exists()
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
@@ -267,11 +269,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        if instance.author != self.context['request'].user:
-            raise PermissionDenied(
-                "You do not have permission to update this recipe."
-            )
-
         instance.name = validated_data.get('name', instance.name)
         instance.text = validated_data.get('text', instance.text)
         instance.cooking_time = validated_data.get(

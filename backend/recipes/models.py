@@ -97,7 +97,11 @@ class RecipeTag(models.Model):
 
 class Favorite(models.Model):
     """Many to Many Рецепт-Юзер"""
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='favorites'
+    )
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
