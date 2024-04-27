@@ -219,12 +219,6 @@ class IngredientDetailSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
-class IngredientDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Ingredient
-        fields = ('id', 'name', 'measurement_unit')
-
-
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(), source='ingredient'
@@ -464,13 +458,6 @@ class SubscribeSerializer(UserSerializer):
     def get_is_subscribed(self, obj):
         user = self.context['request'].user
         return Follow.objects.filter(user=user, following=obj).exists()
-
-    def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        if request:
-            user = request.user
-            return Follow.objects.filter(user=user, following=obj).exists()
-        return False
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
