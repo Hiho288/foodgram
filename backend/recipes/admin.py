@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.db.models import Count
 
-from .models import Ingredient, Recipe, RecipeIngredient, Tag
+from .models import Ingredient, Recipe, RecipeIngredient, RecipeTag, Tag
 
 
 @admin.register(Tag)
@@ -21,6 +21,11 @@ class RecipeIngredientInline(admin.TabularInline):
     extra = 0
 
 
+class RecipeTagInLine(admin.TabularInline):
+    model = RecipeTag
+    extra = 0
+
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
@@ -30,7 +35,7 @@ class RecipeAdmin(admin.ModelAdmin):
     )
     list_filter = ('author', 'name', 'tags')
     search_fields = ('name', 'author__username', 'tags__name')
-    inlines = (RecipeIngredientInline,)
+    inlines = (RecipeIngredientInline, RecipeTagInLine)
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
