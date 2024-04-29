@@ -107,6 +107,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Пользователь с таким username уже существует."
             )
+        if value.lower() == 'me':
+            raise serializers.ValidationError(
+                "Имя пользователя 'me' недопустимо"
+            )
         return value
 
     def create(self, validated_data):
