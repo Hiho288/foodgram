@@ -1,13 +1,12 @@
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from rest_framework import serializers, status
-
 from foodgram_backend.constants import (MAX_INGREDIENT_AMOUNT,
                                         MAX_REGISTRATION_LENGTH,
                                         MIN_INGREDIENT_AMOUNT)
 from recipes.models import (BuyList, Favorite, Ingredient, Recipe,
                             RecipeIngredient, RecipeTag, Tag)
+from rest_framework import serializers, status
 from users.models import Follow, User
 
 from .fields import Base64ImageField
@@ -413,7 +412,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return tags
 
     def validate_required_fields(self, attrs, required_fields):
-        print(attrs)
         for field in required_fields:
             if field not in attrs:
                 raise serializers.ValidationError(

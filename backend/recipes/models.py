@@ -1,7 +1,6 @@
 from colorfield.fields import ColorField
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-
 from foodgram_backend.constants import (MAX_COOKING_TIME,
                                         MAX_INGREDIENT_AMOUNT,
                                         MAX_MEASUREMENT_UNIT_LENGTH,
@@ -102,7 +101,9 @@ class Favorite(models.Model):
         on_delete=models.CASCADE,
         related_name='favorites'
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='favorites'
+    )
 
     class Meta:
         verbose_name = 'Избранное'
@@ -117,8 +118,12 @@ class Favorite(models.Model):
 
 class BuyList(models.Model):
     """Many to Many Рецепт-Юзер"""
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE, related_name='shopping_list'
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='shopping_list'
+    )
 
     class Meta:
         verbose_name = 'Карточка покупок'

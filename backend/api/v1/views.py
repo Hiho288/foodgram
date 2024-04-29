@@ -5,6 +5,8 @@ from django.db.models import Count
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from recipes.models import (BuyList, Favorite, Ingredient, Recipe,
+                            RecipeIngredient, Tag)
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.pagination import (LimitOffsetPagination,
@@ -15,9 +17,6 @@ from rest_framework.permissions import (SAFE_METHODS, AllowAny,
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-
-from recipes.models import (BuyList, Favorite, Ingredient, Recipe,
-                            RecipeIngredient, Tag)
 from users.models import Follow, User
 
 from .filters import IngredientFilter, RecipeFilter
@@ -273,6 +272,18 @@ class RecipeViewSet(ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        is_favorited = self.request.query_params.get('is_favorited')
+        is_in_shopping_cart = self.request.query_params.get(
+            'is_in_shopping_cart'
+        )
+
+        if is_favorited:
+            queryset = queryset.filter(favorites__user=self.request.user.id)
+
+        if is_in_shopping_cart:
+            queryset = queryset.filter(
+                shopping_list__user=self.request.user.id
+            )
 
         queryset = self.filter_class(
             self.request.GET, queryset=queryset, request=self.request
