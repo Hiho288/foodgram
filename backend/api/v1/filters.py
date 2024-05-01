@@ -1,5 +1,6 @@
 import django_filters
 from django_filters import filters
+
 from recipes.models import Ingredient, Recipe, Tag
 
 
@@ -18,18 +19,19 @@ class RecipeFilter(django_filters.FilterSet):
 
     class Meta:
         model = Recipe
-        fields = ('author', 'tags')
+        fields = ('author', 'tags', 'is_favorited', 'is_in_shopping_cart')
 
     def get_is_favorited(self, queryset, name, value):
-        return queryset.filter(favorites__user=self.request.user)
+        if value and self.request.user.is_authenticated:
+            return queryset.filter(
+                favorites__user=self.request.user
+            )
         return queryset
 
     def get_is_in_shopping_cart(self, queryset, name, value):
-        print("QuerySet:", queryset)
-        print("Filtering for favorites:", value)
         if value and self.request.user.is_authenticated:
             return queryset.filter(
-                shopping_list__user=self.request.user,
+                shopping_list__user=self.request.user
             )
         return queryset
 

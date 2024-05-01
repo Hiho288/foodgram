@@ -1,12 +1,13 @@
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
+from rest_framework import serializers, status
+
 from foodgram_backend.constants import (MAX_INGREDIENT_AMOUNT,
                                         MAX_REGISTRATION_LENGTH,
                                         MIN_INGREDIENT_AMOUNT)
 from recipes.models import (BuyList, Favorite, Ingredient, Recipe,
                             RecipeIngredient, RecipeTag, Tag)
-from rest_framework import serializers, status
 from users.models import Follow, User
 
 from .fields import Base64ImageField
@@ -251,8 +252,8 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     author = UserSerializer(read_only=True, )
     image = Base64ImageField(max_length=None)
-    is_favorited = serializers.SerializerMethodField()
-    is_in_shopping_cart = serializers.SerializerMethodField()
+    is_favorited = serializers.SerializerMethodField(read_only=True)
+    is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Recipe
@@ -270,7 +271,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
     def get_is_in_shopping_cart(self, obj):
         user = self.context['request'].user
-        return not user.is_anonymous and BuyList.objects.filter(
+        return BuyList.objects.filter(
             recipe=obj, user=user
         ).exists()
 
@@ -309,6 +310,17 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             recipe=obj, user=user
         ).exists()
 
+    def create_ingredients(self, recipe, ingredients_data):
+        recipe_ingredients = [
+            RecipeIngredient(
+                recipe=recipe,
+                amount=ingredient_data['amount'],
+                ingredient=ingredient_data['ingredient']
+            )
+            for ingredient_data in ingredients_data
+        ]
+        RecipeIngredient.objects.bulk_create(recipe_ingredients)
+
     def create(self, validated_data):
         self.validate_required_fields(
             validated_data,
@@ -322,17 +334,9 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             **validated_data, author=self.context['request'].user
         )
 
-        for ingredient_data in ingredients_data:
-            RecipeIngredient.objects.create(
-                recipe=recipe,
-                amount=ingredient_data['amount'],
-                ingredient=ingredient_data['ingredient']
-            )
-        for tag_data in tags_data:
-            RecipeTag.objects.create(
-                recipe=recipe,
-                tag=Tag.objects.get(name=tag_data)
-            )
+        tags = [Tag.objects.get(name=tag_data) for tag_data in tags_data]
+        self.create_ingredients(recipe, ingredients_data)
+        recipe.tags.set(tags, clear=True)
 
         return recipe
 
@@ -355,20 +359,13 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         )
 
         ingredients_data = validated_data.pop('recipeingredient_set', [])
-        RecipeIngredient.objects.filter(recipe=instance).delete()
-        RecipeTag.objects.filter(recipe=instance).delete()
-        for ingredient_data in ingredients_data:
-            RecipeIngredient.objects.create(
-                recipe=instance,
-                amount=ingredient_data['amount'],
-                ingredient=ingredient_data['ingredient']
-            )
+        self.create_ingredients(instance, ingredients_data)
+
         tags_data = validated_data.get('tags', [])
-        for tag_data in tags_data:
-            RecipeTag.objects.create(
-                recipe=instance,
-                tag=Tag.objects.get(name=tag_data)
-            )
+        tags = [Tag.objects.get(name=tag_data) for tag_data in tags_data]
+
+        instance.tags.set(tags, clear=True)
+
         instance.save()
         return instance
 

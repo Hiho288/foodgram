@@ -5,8 +5,6 @@ from django.db.models import Count
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import (BuyList, Favorite, Ingredient, Recipe,
-                            RecipeIngredient, Tag)
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.pagination import (LimitOffsetPagination,
@@ -17,6 +15,9 @@ from rest_framework.permissions import (SAFE_METHODS, AllowAny,
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+
+from recipes.models import (BuyList, Favorite, Ingredient, Recipe,
+                            RecipeIngredient, Tag)
 from users.models import Follow, User
 
 from .filters import IngredientFilter, RecipeFilter
@@ -236,20 +237,24 @@ class DownloadShoppingCartAPIView(APIView):
         shopping_cart = BuyList.objects.filter(
             user=user
         ).select_related('recipe')
-        ingredients_sum = defaultdict(float)
+        ingredients_sum = defaultdict(lambda: {'amount': 0, 'unit': ''})
 
         for item in shopping_cart:
             recipe_ingredients = RecipeIngredient.objects.filter(
                 recipe=item.recipe
             ).select_related('ingredient')
+
             for ingredient in recipe_ingredients:
-                ingredients_sum[
-                    ingredient.ingredient.name
-                ] += ingredient.amount
+                ingredient_info = ingredients_sum[ingredient.ingredient.name]
+                ingredient_info['amount'] += ingredient.amount
+                ingredient_info[
+                    'unit'
+                ] = ingredient.ingredient.measurement_unit
 
         filename = "shopping_list.txt"
         content = "\n".join(
-            [f"{key}: {amount}" for key, amount in ingredients_sum.items()]
+            [f"{name}: {details['amount']}{details['unit']}" for name,
+             details in ingredients_sum.items()]
         )
 
         response = HttpResponse(content, content_type='text/plain')
@@ -260,35 +265,22 @@ class DownloadShoppingCartAPIView(APIView):
 
 class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
-    filter_backends = (DjangoFilterBackend,)
-    filter_class = RecipeFilter
-    pagination_class = RecipePaginator
     permission_classes = [IsAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
+    pagination_class = RecipePaginator
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = RecipeFilter
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
             return RecipeReadSerializer
         return RecipeWriteSerializer
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        is_favorited = self.request.query_params.get('is_favorited')
-        is_in_shopping_cart = self.request.query_params.get(
-            'is_in_shopping_cart'
-        )
-
-        if is_favorited:
-            queryset = queryset.filter(favorites__user=self.request.user.id)
-
-        if is_in_shopping_cart:
-            queryset = queryset.filter(
-                shopping_list__user=self.request.user.id
-            )
-
-        queryset = self.filter_class(
-            self.request.GET, queryset=queryset, request=self.request
-        ).qs
-        return queryset
+    def get_filterset_kwargs(self):
+        return {
+            'data': self.request.GET,
+            'queryset': self.get_queryset(),
+            'request': self.request,
+        }
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -300,7 +292,7 @@ class RecipeViewSet(ModelViewSet):
         return Response(serializer.data)
 
     @action(
-        methods=['POST', 'DELETE'],
+        methods=['POST',],
         detail=True,
         permission_classes=(IsAuthenticated,)
     )
@@ -325,7 +317,14 @@ class RecipeViewSet(ModelViewSet):
                     {'error': 'Рецепт не найден'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+        return Response(
+            {'error': 'Рецепт не существует или был удален'},
+            status=status.HTTP_404_NOT_FOUND
+        )
 
+    @shopping_cart.mapping.delete
+    def delete_shopping_cart(self, request, pk=None):
+        user = self.request.user
         obj = BuyList.objects.filter(recipe_id=self.kwargs['pk'], user=user)
         if obj.exists():
             obj.delete()
