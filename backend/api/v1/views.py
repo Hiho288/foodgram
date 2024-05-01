@@ -292,7 +292,7 @@ class RecipeViewSet(ModelViewSet):
         return Response(serializer.data)
 
     @action(
-        methods=['POST',],
+        methods=['POST', ],
         detail=True,
         permission_classes=(IsAuthenticated,)
     )
