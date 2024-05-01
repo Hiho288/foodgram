@@ -296,40 +296,14 @@ class RecipeViewSet(ModelViewSet):
         detail=True,
         permission_classes=(IsAuthenticated,)
     )
-    def shopping_cart(self, *args, **kwargs):
-        user = self.request.user
-        if self.request.method == 'POST':
-            recipe_id = self.kwargs['pk']
-            if BuyList.objects.filter(recipe_id=recipe_id, user=user).exists():
-                return Response(
-                    {'errors': 'Рецепт уже был добавлен'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            try:
-                recipe = Recipe.objects.get(id=recipe_id)
-                BuyList.objects.create(recipe=recipe, user=user)
-                serializer = RecipeShortSerializer(recipe)
-                return Response(
-                    serializer.data, status=status.HTTP_201_CREATED
-                )
-            except Recipe.DoesNotExist:
-                return Response(
-                    {'error': 'Рецепт не найден'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        return Response(
-            {'error': 'Рецепт не существует или был удален'},
-            status=status.HTTP_404_NOT_FOUND
+    def shopping_cart(self, request, pk=None):
+        recipe_id = pk
+        response = post_method(
+            request, recipe_id, BuyList, RecipeShortSerializer
         )
+        return response
 
     @shopping_cart.mapping.delete
     def delete_shopping_cart(self, request, pk=None):
-        user = self.request.user
-        obj = BuyList.objects.filter(recipe_id=self.kwargs['pk'], user=user)
-        if obj.exists():
-            obj.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(
-            {'error': 'Рецепт не существует или был удален'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        response = delete_method(request, pk, BuyList)
+        return response
