@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.db.models import Count
 
-from .models import Ingredient, Recipe, RecipeIngredient, RecipeTag, Tag
+from .models import (BuyList, Favorite, Ingredient, Recipe, RecipeIngredient,
+                     RecipeTag, Tag)
 
 
 @admin.register(Tag)
@@ -56,6 +57,16 @@ class RecipeAdmin(admin.ModelAdmin):
     @admin.display(description='Теги')
     def tag_list(self, obj):
         return ", ".join([tag.name for tag in obj.tags.all()])
+
+
+@admin.register(Favorite)
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ('recipe', 'user')
+
+
+@admin.register(BuyList)
+class BuyListAdmin(admin.ModelAdmin):
+    list_display = ('recipe', 'user')
 
 
 admin.site.empty_value_display = 'Не задано'
