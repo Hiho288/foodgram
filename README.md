@@ -1,15 +1,5 @@
 #  Kittygram
 
-## Four reviewer
-https://sprint15bnikolaev.ddns.net
-
-51.250.107.180
-
-Email - cabugold@mail.ru
-
-Username - boris
-
-Password - nikolaev
 
 ## О проекте
 
