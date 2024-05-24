@@ -1,4 +1,4 @@
-#  Kittygram
+#  Foodgram
 
 
 ## О проекте
